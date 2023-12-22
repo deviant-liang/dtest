@@ -8,4 +8,5 @@ add_executable(dtest)
 
 target_sources(dtest PRIVATE
     dtest/dtest.cpp
+    dtest/first_unittest.cpp
 )

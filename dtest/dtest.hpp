@@ -1,18 +1,21 @@
+#ifndef DTEST_HPP
+#define DTEST_HPP
+
 #include <chrono>
 #include <iostream>
 #include <string>
 #include <vector>
 
-#define TEST_AREA int main()
+#define TEST_CASE_START(classname)                             \
+  class classname : public dtest::DTest {                      \
+   public:                                                     \
+    classname(const std::string& name) : dtest::DTest(name) {} \
+    void testCases() override
 
-#define RUN_TEST(classname)           \
-  {                                   \
-    classname classname##_;           \
-    classname##_.setName(#classname); \
-    classname##_.testCases();         \
-  }
-
-#define TEST_CASES void testCases() override
+#define TEST_CASE_END(classname) \
+  }                              \
+  ;                              \
+  dtest::DTest* classname##_(new classname(#classname));
 
 #define TEST(testname)                                                     \
   dtest::curr_test_name = #testname;                                       \
@@ -22,7 +25,8 @@
 
 #define EXPECTED_EQ(actual, expected)                          \
   dtest::end_time = std::chrono::high_resolution_clock::now(); \
-  insert(dtest::curr_test_name, dtest::assertImpl(actual, expected));
+  dtest::assertImpl(actual, expected);                         \
+  insert();
 
 namespace dtest {
 namespace {
@@ -32,35 +36,35 @@ long long curr_class_time_consume = 0;
 
 using dtime_t = std::chrono::steady_clock::time_point;
 
-std::string curr_class_name("");
-std::string curr_test_name("");
-dtime_t start_time = std::chrono::high_resolution_clock::now();
-dtime_t end_time = std::chrono::high_resolution_clock::now();
+inline std::string curr_class_name("");
+inline std::string curr_test_name("");
+inline dtime_t start_time = std::chrono::high_resolution_clock::now();
+inline dtime_t end_time = std::chrono::high_resolution_clock::now();
 
 enum {
   FAILED = 0,
   PASSED,
-  FAILED_CENTER,
-  PASSED_CENTER,
   RUN,
-  SPLICTER,
+  OK,
+  SPLITER,
   THIN_SPLITER,
+  THIN_SPLITER_RED,
   MESSAGE_COUNT
 };
 
-std::string message[MESSAGE_COUNT] = {
-    "\x1B[31m[     FAILED ]\033[0m ",  // FAILED
-    "\x1B[32m[     PASSED ]\033[0m ",  // PASSED
-    "\x1B[31m[   FAILED   ]\033[0m ",  // FAILED_CENTER
-    "\x1B[32m[   PASSED   ]\033[0m ",  // PASSED_CENTER
-    "\x1B[32m[ RUN        ]\033[0m ",  // RUN
-    "\x1B[32m[============]\033[0m ",  // SPLICTER
-    "\x1B[32m[------------]\033[0m "   // THIN_SPLITER
+inline std::string message[MESSAGE_COUNT] = {
+    "\x1B[31m[  FAILED  ]\033[0m ",  // FAILED_CENTER
+    "\x1B[32m[  PASSED  ]\033[0m ",  // PASSED_CENTER
+    "\x1B[32m[ RUN      ]\033[0m ",  // RUN
+    "\x1B[32m[       OK ]\033[0m ",  // OK
+    "\x1B[32m[==========]\033[0m ",  // SPLICTER
+    "\x1B[32m[----------]\033[0m ",  // THIN_SPLITER
+    "\x1B[31m[----------]\033[0m "   // THIN_SPLITER_RED
 };
 
 enum class Result { FAILED, PASSED };
 
-long long calTime() {
+inline long long calTime() {
   auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(
       end_time - start_time);
   curr_class_time_consume += elapsed_time.count();
@@ -68,61 +72,61 @@ long long calTime() {
 }
 
 template <typename T>
-Result assertImpl(T actual, T expected) {
+void assertImpl(T actual, T expected) {
   bool result = (actual == expected);
-  if (result) {
-    std::cout << message[PASSED] << curr_class_name << "." << curr_test_name
-              << " (" << calTime() << " ms)" << std::endl;
-    curr_class_pass_count++;
-  } else {
-    std::cout << message[FAILED] << curr_class_name << "." << curr_test_name
-              << " (" << calTime() << " ms)" << std::endl;
-  }
-  return result ? Result::PASSED : Result::FAILED;
-}
 
-struct CaseResult {
-  std::string testname;
-  Result result;
-};
+  const std::string& msg = result ? message[OK] : message[FAILED];
+
+  std::cout << msg << curr_class_name << "." << curr_test_name << " ("
+            << calTime() << " ms)" << std::endl;
+
+  if (result)
+    ++curr_class_pass_count;
+}
 
 class DTest {
  public:
-  explicit DTest() = default;
+  struct DTable {
+    std::vector<DTest*> dtests;
+  };
+  inline static DTable dtable_;
+
+  DTest(const std::string& name) : name_(name) {
+    curr_class_name = name;
+    dtable_.dtests.push_back(this);
+  }
   virtual ~DTest() {
     size_t fail_count = count_ - curr_class_pass_count;
-    (fail_count > 0) ? std::cout << message[FAILED_CENTER]
-                     : std::cout << message[PASSED_CENTER];
+    (fail_count > 0) ? std::cout << message[THIN_SPLITER_RED]
+                     : std::cout << message[THIN_SPLITER];
 
-    std::cout << count_ << " test(s) from " << name_ << ", "
+    std::cout << count_ << " test(s) from " << name_ << ". "
               << curr_class_pass_count << " passed, "
               << count_ - curr_class_pass_count << " failed"
               << " (total: " << curr_class_time_consume << " ms)" << std::endl;
+
+    std::cout << std::endl;
+
     curr_class_pass_count = 0;
     curr_class_time_consume = 0;
   }
 
-  void setName(const std::string& name) {
-    std::cout << message[SPLICTER] << "start test " << name << std::endl;
-    curr_class_name = name;
-    name_ = name;
+  void test() {
+    std::cout << message[THIN_SPLITER] << "Start to test " << name_
+              << std::endl;
+    testCases();
   }
-  const std::string& getName() const { return name_; }
-
-  const std::vector<CaseResult>& getCaseResult() const { return case_results_; }
 
  protected:
   virtual void testCases() = 0;
 
-  void insert(const std::string& name, Result res) {
-    ++count_;
-    case_results_.emplace_back(CaseResult{.testname = name, .result = res});
-  }
+  void insert() { ++count_; }
 
  private:
-  std::vector<CaseResult> case_results_;
   std::string name_;
   size_t count_ = 0;
 };
 
 }  // namespace dtest
+
+#endif  // DTEST_HPP
