@@ -3,36 +3,46 @@
 #include <chrono>
 #include <thread>
 
-TEST_CASE_START(ThisIsATestClass) {
-  TEST(METHOD_1) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    std::string actual = "actual";
-    std::string expected = "expected";
-    EXPECTED_EQ(actual, expected);
+bool isPrime(int number) {
+  if (number <= 1) {
+    return false;
   }
 
-  TEST(METHOD_2) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    std::string actual = "actual";
-    std::string expected = "actual";
-    EXPECTED_EQ(actual, expected);
+  for (int i = 2; i * i <= number; ++i) {
+    if (number % i == 0) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+TEST_CASE_START(IsPrime) {
+  TEST(IsPrime3) {
+    EXPECTED_TRUE(isPrime(3));
+  }
+
+  TEST(IsPrime4) {
+    EXPECTED_FALSE(isPrime(4));
   }
 }
-TEST_CASE_END(ThisIsATestClass)
+TEST_CASE_END(IsPrime)
 
-TEST_CASE_START(ThisIsBTestClass) {
-  TEST(METHOD_1) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    std::string actual = "actual";
-    std::string expected = "actual";
-    EXPECTED_EQ(actual, expected);
+TEST_CASE_START(Dummy) {
+  TEST(StringEqual1) {
+    std::string expected = "hello";
+    std::string actual = "hi";
+
+    EXPECTED_EQ(expected, actual);
   }
 
-  TEST(METHOD_2) {
+  TEST(StringEqual2) {
+    std::string expected = "hello";
+    std::string actual = "hi";
+
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    std::string actual = "actual";
-    std::string expected = "actual";
-    EXPECTED_EQ(actual, expected);
+
+    EXPECTED_NE(expected, actual);
   }
 }
-TEST_CASE_END(ThisIsBTestClass)
+TEST_CASE_END(Dummy)
