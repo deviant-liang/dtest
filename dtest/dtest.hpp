@@ -109,6 +109,7 @@ class DTest {
 
     curr_class_pass_count = 0;
     curr_class_time_consume = 0;
+    total_count_ += count_;
   }
 
   void test() {
@@ -116,6 +117,9 @@ class DTest {
               << std::endl;
     testCases();
   }
+
+  static void init() { total_count_ = 0; }
+  static size_t getTotalTestCount() { return total_count_; }
 
  protected:
   virtual void testCases() = 0;
@@ -125,6 +129,8 @@ class DTest {
  private:
   std::string name_;
   size_t count_ = 0;
+
+  static size_t total_count_;
 };
 
 }  // namespace dtest
