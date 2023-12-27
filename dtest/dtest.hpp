@@ -2,21 +2,19 @@
 #define DTEST_HPP
 
 #include <chrono>
-#include <format>
-#include <iostream>
 #include <string>
 #include <vector>
 
-#define TEST_CASE_START(classname)                                          \
-  class classname##_FOR_DTEST_ : public dtest::DTest {                      \
-   public:                                                                  \
-    classname##_FOR_DTEST_(const std::string& name) : dtest::DTest(name) {} \
-    void testCases() override
-
-#define TEST_CASE_END(classname) \
-  }                              \
-  ;                              \
-  dtest::DTest* classname##_FOR_DTEST__(new classname##_FOR_DTEST_(#classname));
+#define TEST_CASE(classname)                                         \
+  class classname##_FOR_DTEST_ : public dtest::DTest {               \
+   public:                                                           \
+    std::string getName() const override {                           \
+      return #classname;                                             \
+    }                                                                \
+    void testCases() override;                                       \
+  };                                                                 \
+  dtest::DTest* classname##_FOR_DTEST__(new classname##_FOR_DTEST_); \
+  void classname##_FOR_DTEST_ ::testCases()
 
 #define TEST(testname) dtest::startTest(#testname);
 
@@ -87,8 +85,8 @@ inline std::string message[MESSAGE_COUNT] = {
 
 inline void startTest(const char* testname) {
   curr_test_name = testname;
-  std::cout << std::format("{}{}.{}\n", message[RUN], curr_class_name,
-                           curr_test_name);
+  printf("%s%s.%s\n", message[RUN].c_str(), curr_class_name.c_str(),
+         curr_test_name.c_str());
   start_time = std::chrono::high_resolution_clock::now();
 }
 
@@ -110,13 +108,13 @@ inline void handleResult(const char* filename, const int line) {
     ++curr_class_pass_count;
     msg = message[OK];
   } else {
-    std::cout << std::format("{}:{}: Failure\n", filename, line);
+    printf("%s:%d: Failure\n", filename, line);
     fail_list.push_back(std::make_pair(curr_class_name, curr_test_name));
     msg = message[FAILED];
   }
 
-  std::cout << std::format("{}{}.{} ({} ms)\n", msg, curr_test_name,
-                           curr_test_name, calTime());
+  printf("%s%s.%s (%lld ms)\n", msg.c_str(), curr_test_name.c_str(),
+                           curr_test_name.c_str(), calTime());
 }
 
 class DTest {
@@ -126,7 +124,7 @@ class DTest {
   };
   inline static DTable dtable_;
 
-  DTest(const std::string& name);
+  DTest();
 
   virtual ~DTest();
 
@@ -136,12 +134,12 @@ class DTest {
   static size_t getTotalTestCount() { return total_count_; }
 
  protected:
+  virtual std::string getName() const { return ""; }
   virtual void testCases() = 0;
 
   void insert() { ++count_; }
 
  private:
-  std::string name_;
   size_t count_ = 0;
 
   static size_t total_case_count_;

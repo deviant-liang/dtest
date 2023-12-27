@@ -29,46 +29,43 @@ class DTestSetup {
     }
   }
 
-  void whereIsMain() const {
-    std::cout << std::format("Running main() from {}\n", __FILE__);
-  }
+  void whereIsMain() const { printf("Running main() from %s\n", __FILE__); }
 
   void runTestCases() const {
-    std::cout << std::format("{}Running {} test cases(s).\n", message[SPLITER],
-                             DTest::getTotalCaseCount());
+    printf("%sRunning %zu test cases(s).\n", message[SPLITER].c_str(),
+           DTest::getTotalCaseCount());
   }
 
   void testRan() const {
-    std::cout << std::format(
-        "{}{} test(s) ran from {} test case(s). ({} ms total)\n",
-        message[SPLITER], DTest::getTotalTestCount(),
-        DTest::getTotalCaseCount(), total_consume_time);
+    printf("%s%zu test(s) ran from %zu test case(s). (%lld ms total)\n",
+           message[SPLITER].c_str(), DTest::getTotalTestCount(),
+           DTest::getTotalCaseCount(), total_consume_time);
   }
 
   void totalPassTests() const {
-    std::cout << std::format("{}{} test(s).\n", message[PASSED],
-                             DTest::getTotalTestCount() - fail_list.size());
+    printf("%s%zu test(s).\n", message[PASSED].c_str(),
+           DTest::getTotalTestCount() - fail_list.size());
   }
 
   void failList() const {
     if (!fail_list.empty()) {
-      std::cout << std::format("{}{} test(s), listed below:\n", message[FAILED],
-                               fail_list.size());
+      printf("%s%zu test(s), listed below:\n", message[FAILED].c_str(),
+             fail_list.size());
       for (const auto& case_test_pair : fail_list) {
-        std::cout << std::format("{}{}.{}\n", message[FAILED],
-                                 case_test_pair.first, case_test_pair.second);
+        printf("%s%s.%s\n", message[FAILED].c_str(),
+               case_test_pair.first.c_str(), case_test_pair.second.c_str());
       }
     }
   }
 
-  void end() const { std::cout << std::endl; }
+  void end() const { printf("\n"); }
 };
 }  // namespace
 
 size_t DTest::total_case_count_ = 0;
 size_t DTest::total_count_ = 0;
 
-DTest::DTest(const std::string& name) : name_(name) {
+DTest::DTest() {
   ++total_case_count_;
   dtable_.dtests.push_back(this);
 }
@@ -78,10 +75,9 @@ DTest::~DTest() {
   const std::string& msg =
       (fail_count > 0) ? message[THIN_SPLITER_RED] : message[THIN_SPLITER];
 
-  std::cout << std::format(
-      "{}{} test(s) from {}. {} passed, {} failed ({} ms total)\n\n", msg,
-      count_, name_, curr_class_pass_count, fail_count,
-      curr_class_time_consume);
+  printf("%s%zu test(s) from %s. %zu passed, %zu failed (%lld ms total)\n\n",
+         msg.c_str(), count_, getName().c_str(), curr_class_pass_count,
+         fail_count, curr_class_time_consume);
 
   total_consume_time += curr_class_time_consume;
 
@@ -91,10 +87,10 @@ DTest::~DTest() {
 }
 
 void DTest::test() {
-  curr_class_name = name_;
+  curr_class_name = getName();
 
-  std::cout << std::format("{}Running tests from {}\n", message[THIN_SPLITER],
-                           name_);
+  printf("%sRunning tests from %s\n", message[THIN_SPLITER].c_str(),
+         getName().c_str());
 
   testCases();
 }

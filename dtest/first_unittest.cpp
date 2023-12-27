@@ -17,7 +17,7 @@ bool isPrime(int number) {
   return true;
 }
 
-TEST_CASE_START(IsPrime) {
+TEST_CASE(IsPrime) {
   TEST(IsPrime3) {
     EXPECTED_TRUE(isPrime(3));
   }
@@ -26,9 +26,8 @@ TEST_CASE_START(IsPrime) {
     EXPECTED_FALSE(isPrime(4));
   }
 }
-TEST_CASE_END(IsPrime)
 
-TEST_CASE_START(Dummy) {
+TEST_CASE(Dummy) {
   TEST(StringEqual1) {
     std::string expected = "hello";
     std::string actual = "hi";
@@ -45,4 +44,3 @@ TEST_CASE_START(Dummy) {
     EXPECTED_NE(expected, actual);
   }
 }
-TEST_CASE_END(Dummy)
