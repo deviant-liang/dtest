@@ -21,10 +21,9 @@ DTest is a lightweight C++ testing framework for writing and executing unit test
 3. Define your test cases using the provided macros:
 
     ```cpp
-    TEST_CASE_START(MyTestClass) {
+    TEST_CASE(MyTestClass) {
         // Your test cases go here
     }
-    TEST_CASE_END(MyTestClass)
     ```
 
 4. Within each test case, use the `TEST` and `EXPECTED_` macros to define your individual tests:
@@ -48,11 +47,10 @@ Here's a simple example of a test file using DTest:
 // example_unittest.cpp
 #include "DTest.hpp"
 
-TEST_CASE_START(MyTestClass) {
+TEST_CASE(MyTestClass) {
   TEST(MyTestName) {
     int result = 42;
     EXPECTED_EQ(result, 42);
   }
 }
-TEST_CASE_END(MyTestClass)
 ```
