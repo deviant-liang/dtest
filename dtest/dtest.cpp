@@ -23,9 +23,9 @@ class DTestSetup {
 
  private:
   void mainLoop() const {
-    for (auto testclass : DTest::dtable_.dtests) {
-      testclass->test();
-      delete testclass;
+    for (auto testcase : DTest::dtable_.dtests) {
+      testcase->test();
+      testcase->shutdown();
     }
   }
 
@@ -66,11 +66,10 @@ size_t DTest::total_case_count_ = 0;
 size_t DTest::total_count_ = 0;
 
 DTest::DTest() {
-  ++total_case_count_;
-  dtable_.dtests.push_back(this);
+  setup();
 }
 
-DTest::~DTest() {
+void DTest::shutdown() {
   size_t fail_count = count_ - curr_class_pass_count;
   const std::string& msg =
       (fail_count > 0) ? message[THIN_SPLITER_RED] : message[THIN_SPLITER];
@@ -86,6 +85,11 @@ DTest::~DTest() {
   total_count_ += count_;
 }
 
+void DTest::setup() {
+  ++total_case_count_;
+  dtable_.dtests.push_back(this);
+}
+
 void DTest::test() {
   curr_class_name = getName();
 
@@ -93,6 +97,15 @@ void DTest::test() {
          getName().c_str());
 
   testCases();
+}
+
+void DTest::startTest(const char* testname) {
+  curr_test_name = testname;
+  printf("%s%s.%s\n", message[RUN].c_str(), curr_class_name.c_str(),
+         curr_test_name.c_str());
+
+  ++count_;
+  start_time = std::chrono::high_resolution_clock::now();
 }
 }  // namespace dtest
 

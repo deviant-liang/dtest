@@ -5,43 +5,38 @@
 #include <string>
 #include <vector>
 
-#define TEST_CASE(classname)                                         \
-  class classname##_FOR_DTEST_ : public dtest::DTest {               \
-   public:                                                           \
-    std::string getName() const override {                           \
-      return #classname;                                             \
-    }                                                                \
-    void testCases() override;                                       \
-  };                                                                 \
-  dtest::DTest* classname##_FOR_DTEST__(new classname##_FOR_DTEST_); \
-  void classname##_FOR_DTEST_ ::testCases()
+#define TEST_CASE(casename)                      \
+  class casename##_DTEST : public dtest::DTest { \
+   public:                                       \
+    std::string getName() const override {       \
+      return #casename;                          \
+    }                                            \
+    void testCases() override;                   \
+  };                                             \
+  casename##_DTEST casename##_DTEST_INST;        \
+  void casename##_DTEST::testCases()
 
-#define TEST(testname) dtest::startTest(#testname);
+#define TEST(testname) startTest(#testname);
 
-#define EXPECTED_EQ(actual, expected)                           \
-  dtest::end_time = std::chrono::high_resolution_clock::now();  \
-  insert();                                                     \
-  dtest::curr_expected = dtest::expectedImpl(expected, actual); \
-  dtest::handleResult(__FILE__, __LINE__);
+#define EXPECTED_EQ(actual, expected)                                  \
+  dtest::end_time = std::chrono::high_resolution_clock::now();         \
+  dtest::handleResult(dtest::expectedImpl(expected, actual), __FILE__, \
+                      __LINE__);
 
-#define EXPECTED_NE(actual, expected)                                 \
-  dtest::end_time = std::chrono::high_resolution_clock::now();        \
-  insert();                                                           \
-  dtest::curr_expected = dtest::expectedImpl(expected, actual, true); \
-  dtest::handleResult(__FILE__, __LINE__);
+#define EXPECTED_NE(actual, expected)                                        \
+  dtest::end_time = std::chrono::high_resolution_clock::now();               \
+  dtest::handleResult(dtest::expectedImpl(expected, actual, true), __FILE__, \
+                      __LINE__);
 
-#define EXPECTED_TRUE(actual)                                                  \
-  dtest::end_time = std::chrono::high_resolution_clock::now();                 \
-  insert();                                                                    \
-  dtest::curr_expected = dtest::expectedImpl(true, static_cast<bool>(actual)); \
-  dtest::handleResult(__FILE__, __LINE__);
+#define EXPECTED_TRUE(actual)                                               \
+  dtest::end_time = std::chrono::high_resolution_clock::now();              \
+  dtest::handleResult(dtest::expectedImpl(true, static_cast<bool>(actual)), \
+                      __FILE__, __LINE__);
 
-#define EXPECTED_FALSE(actual)                                 \
-  dtest::end_time = std::chrono::high_resolution_clock::now(); \
-  insert();                                                    \
-  dtest::curr_expected =                                       \
-      dtest::expectedImpl(false, static_cast<bool>(actual));   \
-  dtest::handleResult(__FILE__, __LINE__);
+#define EXPECTED_FALSE(actual)                                               \
+  dtest::end_time = std::chrono::high_resolution_clock::now();               \
+  dtest::handleResult(dtest::expectedImpl(false, static_cast<bool>(actual)), \
+                      __FILE__, __LINE__);
 
 namespace dtest {
 using CaseTestPair =
@@ -53,8 +48,6 @@ inline size_t curr_class_pass_count = 0;
 inline long long curr_class_time_consume = 0;
 inline std::string curr_class_name("");
 inline std::string curr_test_name("");
-
-inline bool curr_expected = false;
 
 using dtime_t = std::chrono::steady_clock::time_point;
 inline dtime_t start_time;
@@ -83,13 +76,6 @@ inline std::string message[MESSAGE_COUNT] = {
     "\x1B[31m[----------]\033[0m "   // THIN_SPLITER_RED
 };
 
-inline void startTest(const char* testname) {
-  curr_test_name = testname;
-  printf("%s%s.%s\n", message[RUN].c_str(), curr_class_name.c_str(),
-         curr_test_name.c_str());
-  start_time = std::chrono::high_resolution_clock::now();
-}
-
 inline long long calTime() {
   auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(
       end_time - start_time);
@@ -102,9 +88,9 @@ bool expectedImpl(T expected, T actual, const bool reverse = false) {
   return reverse ? (actual != expected) : (actual == expected);
 }
 
-inline void handleResult(const char* filename, const int line) {
+inline void handleResult(bool result, const char* filename, const int line) {
   std::string msg;
-  if (curr_expected) {
+  if (result) {
     ++curr_class_pass_count;
     msg = message[OK];
   } else {
@@ -114,19 +100,22 @@ inline void handleResult(const char* filename, const int line) {
   }
 
   printf("%s%s.%s (%lld ms)\n", msg.c_str(), curr_test_name.c_str(),
-                           curr_test_name.c_str(), calTime());
+         curr_test_name.c_str(), calTime());
 }
 
 class DTest {
  public:
   struct DTable {
+    // pointer to global object
     std::vector<DTest*> dtests;
   };
   inline static DTable dtable_;
 
   DTest();
 
-  virtual ~DTest();
+  virtual ~DTest() = default;
+
+  void shutdown();
 
   void test();
 
@@ -137,9 +126,11 @@ class DTest {
   virtual std::string getName() const { return ""; }
   virtual void testCases() = 0;
 
-  void insert() { ++count_; }
+  void startTest(const char* testname);
 
  private:
+  void setup();
+
   size_t count_ = 0;
 
   static size_t total_case_count_;
