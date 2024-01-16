@@ -32,7 +32,7 @@ class DTestSetup {
   void whereIsMain() const { printf("Running main() from %s\n", __FILE__); }
 
   void runTestCases() const {
-    printf("%sRunning %zu test cases(s).\n", message[SPLITER].c_str(),
+    printf("%sRunning %zu test case(s).\n", message[SPLITER].c_str(),
            DTest::getTotalCaseCount());
   }
 
@@ -65,7 +65,7 @@ class DTestSetup {
 size_t DTest::total_case_count_ = 0;
 size_t DTest::total_count_ = 0;
 
-DTest::DTest() {
+DTest::DTest() noexcept {
   setup();
 }
 

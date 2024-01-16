@@ -11,6 +11,8 @@
     std::string getName() const override {       \
       return #casename;                          \
     }                                            \
+                                                 \
+   protected:                                    \
     void testCases() override;                   \
   };                                             \
   casename##_DTEST casename##_DTEST_INST;        \
@@ -18,24 +20,23 @@
 
 #define TEST(testname) startTest(#testname);
 
-#define EXPECTED_EQ(actual, expected)                                  \
-  dtest::end_time = std::chrono::high_resolution_clock::now();         \
-  dtest::handleResult(dtest::expectedImpl(expected, actual), __FILE__, \
+#define EXPECT_EQ(actual, expected)                            \
+  dtest::end_time = std::chrono::high_resolution_clock::now(); \
+  dtest::handleResult(dtest::expectImpl(expected, actual), __FILE__, __LINE__);
+
+#define EXPECT_NE(actual, expected)                                        \
+  dtest::end_time = std::chrono::high_resolution_clock::now();             \
+  dtest::handleResult(dtest::expectImpl(expected, actual, true), __FILE__, \
                       __LINE__);
 
-#define EXPECTED_NE(actual, expected)                                        \
-  dtest::end_time = std::chrono::high_resolution_clock::now();               \
-  dtest::handleResult(dtest::expectedImpl(expected, actual, true), __FILE__, \
-                      __LINE__);
-
-#define EXPECTED_TRUE(actual)                                               \
-  dtest::end_time = std::chrono::high_resolution_clock::now();              \
-  dtest::handleResult(dtest::expectedImpl(true, static_cast<bool>(actual)), \
+#define EXPECT_TRUE(actual)                                               \
+  dtest::end_time = std::chrono::high_resolution_clock::now();            \
+  dtest::handleResult(dtest::expectImpl(true, static_cast<bool>(actual)), \
                       __FILE__, __LINE__);
 
-#define EXPECTED_FALSE(actual)                                               \
-  dtest::end_time = std::chrono::high_resolution_clock::now();               \
-  dtest::handleResult(dtest::expectedImpl(false, static_cast<bool>(actual)), \
+#define EXPECT_FALSE(actual)                                               \
+  dtest::end_time = std::chrono::high_resolution_clock::now();             \
+  dtest::handleResult(dtest::expectImpl(false, static_cast<bool>(actual)), \
                       __FILE__, __LINE__);
 
 namespace dtest {
@@ -84,7 +85,7 @@ inline long long calTime() {
 }
 
 template <typename T>
-bool expectedImpl(T expected, T actual, const bool reverse = false) {
+bool expectImpl(T expected, T actual, const bool reverse = false) {
   return reverse ? (actual != expected) : (actual == expected);
 }
 
@@ -111,7 +112,7 @@ class DTest {
   };
   inline static DTable dtable_;
 
-  DTest();
+  DTest() noexcept;
 
   virtual ~DTest() = default;
 
@@ -123,7 +124,7 @@ class DTest {
   static size_t getTotalTestCount() { return total_count_; }
 
  protected:
-  virtual std::string getName() const { return ""; }
+  virtual std::string getName() const = 0;
   virtual void testCases() = 0;
 
   void startTest(const char* testname);

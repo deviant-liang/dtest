@@ -19,11 +19,11 @@ bool isPrime(int number) {
 
 TEST_CASE(IsPrime) {
   TEST(IsPrime3) {
-    EXPECTED_TRUE(isPrime(3));
+    EXPECT_TRUE(isPrime(3));
   }
 
   TEST(IsPrime4) {
-    EXPECTED_FALSE(isPrime(4));
+    EXPECT_FALSE(isPrime(4));
   }
 }
 
@@ -32,7 +32,7 @@ TEST_CASE(Dummy) {
     std::string expected = "hello";
     std::string actual = "hi";
 
-    EXPECTED_EQ(expected, actual);
+    EXPECT_EQ(expected, actual);
   }
 
   TEST(StringEqual2) {
@@ -41,6 +41,6 @@ TEST_CASE(Dummy) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-    EXPECTED_NE(expected, actual);
+    EXPECT_NE(expected, actual);
   }
 }
